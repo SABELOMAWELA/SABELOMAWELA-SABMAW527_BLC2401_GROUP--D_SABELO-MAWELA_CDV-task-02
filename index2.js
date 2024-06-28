@@ -19,4 +19,56 @@ function parseExpression(program) {
     return string.slice(first);
   }
   
+  function parseApply(expr, program) {
+    program = skipSpace(program);
+    if (program[0] != "(") {
+      return {expr: expr, rest: program};
+    }
+  
+    program = skipSpace(program.slice(1));
+    expr = {type: "apply", operator: expr, args: []};
+    while (program[0] != ")") {
+      let arg = parseExpression(program);
+      expr.args.push(arg.expr);
+      program = skipSpace(arg.rest);
+      if (program[0] == ",") {
+        program = skipSpace(program.slice(1));
+      } else if (program[0] != ")") {
+        throw new SyntaxError("Expected ',' or ')'");
+      }
+    }
+    return parseApply(expr, program.slice(1));
+  }
+  
+  function parse(program) {
+    let {expr, rest} = parseExpression(program);
+    if (skipSpace(rest).length > 0) {
+      throw new SyntaxError("Unexpected text after program");
+    }
+    return expr;
+  }
+  
+  function evaluate(expr, scope) {
+    if (expr.type == "value") {
+      return expr.value;
+    } else if (expr.type == "word") {
+      if (expr.name in scope) {
+        return scope[expr.name];
+      } else {
+        throw new ReferenceError(Undefined binding: ${expr.name});
+      }
+    } else if (expr.type == "apply") {
+      let {operator, args} = expr;
+      if (operator.type == "word" && operator.name in specialForms) {
+        return specialForms[operator.name](expr.args, scope);
+      } else {
+        let op = evaluate(operator, scope);
+        if (typeof op == "function") {
+          return op(...args.map(arg => evaluate(arg, scope)));
+        } else {
+          throw new TypeError("Applying a non-function.");
+        }
+      }
+    }
+  }
   
