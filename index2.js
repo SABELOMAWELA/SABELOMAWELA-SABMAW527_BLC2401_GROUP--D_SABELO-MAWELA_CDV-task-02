@@ -2,11 +2,11 @@ function parseExpression(program) {
     program = skipSpace(program);
     let match, expr;
     if (match = /^"([^"]*)"/.exec(program)) {
-      expr = {type: "value", value: match[1]};
+      expr = { type: "value", value: match[1] };
     } else if (match = /^\d+\b/.exec(program)) {
-      expr = {type: "value", value: Number(match[0])};
+      expr = { type: "value", value: Number(match[0]) };
     } else if (match = /^[^\s(),#"]+/.exec(program)) {
-      expr = {type: "word", name: match[0]};
+      expr = { type: "word", name: match[0] };
     } else {
       throw new SyntaxError("Unexpected syntax: " + program);
     }
@@ -22,11 +22,11 @@ function parseExpression(program) {
   function parseApply(expr, program) {
     program = skipSpace(program);
     if (program[0] != "(") {
-      return {expr: expr, rest: program};
+      return { expr: expr, rest: program };
     }
   
     program = skipSpace(program.slice(1));
-    expr = {type: "apply", operator: expr, args: []};
+    expr = { type: "apply", operator: expr, args: [] };
     while (program[0] != ")") {
       let arg = parseExpression(program);
       expr.args.push(arg.expr);
@@ -41,7 +41,7 @@ function parseExpression(program) {
   }
   
   function parse(program) {
-    let {expr, rest} = parseExpression(program);
+    let { expr, rest } = parseExpression(program);
     if (skipSpace(rest).length > 0) {
       throw new SyntaxError("Unexpected text after program");
     }
@@ -55,10 +55,10 @@ function parseExpression(program) {
       if (expr.name in scope) {
         return scope[expr.name];
       } else {
-        throw new ReferenceError(Undefined binding: ${expr.name});
+        throw new ReferenceError(`Undefined binding: ${expr.name}`);
       }
     } else if (expr.type == "apply") {
-      let {operator, args} = expr;
+      let { operator, args } = expr;
       if (operator.type == "word" && operator.name in specialForms) {
         return specialForms[operator.name](expr.args, scope);
       } else {
@@ -117,8 +117,8 @@ function parseExpression(program) {
   topScope.true = true;
   topScope.false = false;
   
-  ["+", "-", "*", "/", "==", "<", ">"].forEach(op => {
-    topScope[op] = Function("a, b", return a ${op} b;);
+  ["+","-","*","/","==","<",">"].forEach(op => {
+    topScope[op] = Function("a, b", `return a ${op} b;`);
   });
   
   topScope.print = value => {
@@ -165,3 +165,4 @@ function parseExpression(program) {
     do(define(f, fun(a, b, +(a, b))),
        print(f(4, 5)))
   `);
+  
